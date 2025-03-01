@@ -1,0 +1,62 @@
+.main-grid{
+    display: grid;
+    grid-template-columns: 30% 70%;
+    width: 80%;
+    margin: auto;
+}
+
+.btns button{
+    width: 80%;
+    margin-bottom: 10px;
+    border: 0px;
+    padding: 10px;
+    background-color: white;
+    text-align: left;
+    display: grid;
+    grid-template-columns: 10% 80%;
+    align-items: center;
+    color: rgb(38, 54, 54);
+}
+.btns button i{
+    color: rgb(231, 150, 0);
+    font-weight: bold;
+}
+.btns h1{
+    width: 80%;
+    margin: auto;
+    margin-bottom: 10px;
+    border: 0px;
+    padding: 10px;
+    background-color: white;
+    text-align: left;
+    display: grid;
+    grid-template-columns: 10% 80%;
+    align-items: center;
+}
+
+.container{
+    min-height: 700px;
+}
+
+#showWeeklyLiders,
+#showMangers {
+    display: none; 
+}
+.btns{
+    position: fixed;
+    height: 90%;
+}
+#logoutButton{
+    position: fixed;
+    bottom: 5%;
+    width: 20%;
+    color: rgb(42, 105, 221);
+    font-size: 18px;
+}
+#logoutButton i{
+    color: rgb(42, 105, 221);
+    font-size: 18px;
+}
+h2{
+    margin-bottom: 50px;
+}

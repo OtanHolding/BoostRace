@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация</title>
+    <link rel="icon" type="png" href="logo.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #66b5ea, #4c4ba2);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .login-container h2 {
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-control {
+            border-radius: 8px;
+        }
+        .btn-primary {
+            background: #667eea;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 1.1em;
+            transition: 0.3s;
+        }
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            display: none;
+            margin-top: 10px;
+            transition: 0.3s ease-in-out;
+        }
+        .login-container img{
+            width: 90%;
+            margin-bottom: 50px;
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Авторизация</h2>
+
+        <img src="loginlogo.png">
+        <form id="loginForm" class="needs-validation" novalidate>
+            <div class="mb-3">
+                <input type="email" class="form-control" id="email" placeholder="Введите email" required>
+                <div class="invalid-feedback">Введите корректный email</div>
+            </div>
+            
+            <div class="mb-3">
+                <input type="password" class="form-control" id="password" placeholder="Введите пароль" required>
+                <div class="invalid-feedback">Введите пароль</div>
+            </div>
+            <p id="loginError" class="error">Неверный логин или пароль</p>
+            <button type="submit" class="btn btn-primary w-100">Войти</button>
+            <h6 style="color: #414141; margin-top: 30px; font-weight: 400; font-size: 14px;">Created by Amir</h6>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let email = document.getElementById('email');
+            let password = document.getElementById('password');
+            let loginError = document.getElementById('loginError');
+
+            if (!email.checkValidity() || !password.checkValidity()) {
+                event.stopPropagation();
+                this.classList.add('was-validated');
+                return;
+            }
+
+            let users = {
+                "rop1@bk.ru": "Rop2252",
+                "rop2@bk.ru": "Rop2250",
+                "rop3@bk.ru": "7575",
+                "admin@bk.ru": "LDR2236"
+            };
+
+            if (users[email.value] && users[email.value] === password.value) {
+                loginError.style.display = 'none';
+                let redirectPage = (email.value === "admin@bk.ru") ? "admin.html" : "rop.html";
+                window.location.href = redirectPage;
+            } else {
+                loginError.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

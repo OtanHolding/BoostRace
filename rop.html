@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление менеджерами</title>
+    <link rel="icon" type="png" href="logo.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="index.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getDatabase, ref, push, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+
+        // 🔥 **Firebase конфигурация**
+        const firebaseConfig = {
+            apiKey: "AIzaSyAe60jFUBBzI_3FpBihL-Vf45cQG14sx8",
+            authDomain: "balalife-crm-application.firebaseapp.com",
+            databaseURL: "https://balalife-crm-application-default-rtdb.firebaseio.com",
+            projectId: "balalife-crm-application",
+            storageBucket: "balalife-crm-application.appspot.com",
+            messagingSenderId: "630645094153",
+            appId: "1:630645094153:web:99bf08136f6a10a2b2c5d8"
+        };
+
+        // 🛠 **Инициализация Firebase**
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const managerForm = document.getElementById("managerForm");
+            const managerTableBody = document.getElementById("managerTableBody");
+            const orderForm = document.getElementById("orderForm");
+            const orderDepartment = document.getElementById("orderDepartment");
+            const orderManager = document.getElementById("orderManager");
+            const orderAmount = document.getElementById("orderAmount");
+            const topManagerForm = document.getElementById("topManagerForm");
+            const topManagerTable = document.getElementById("topManagerTable");
+            const showLiders = document.getElementById("showLiders");
+
+            // ✅ **Добавление менеджера**
+            managerForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                let pin = document.getElementById("pin").value;
+                let name = document.getElementById("name").value;
+                let department = document.getElementById("department").value;
+
+                if (pin && name && department) {
+                    push(ref(db, "managers"), { pin, name, department })
+                        .then(() => {
+                            alert("Менеджер добавлен!");
+                            managerForm.reset();
+                        })
+                        .catch(error => console.error("Ошибка сохранения:", error));
+                }
+            });
+
+            onValue(ref(db, "managers"), (snapshot) => { 
+                managerTableBody.innerHTML = "";
+                orderDepartment.innerHTML = `<option value="">Выберите отдел</option>`;
+
+                let departments = new Set();
+
+                snapshot.forEach((childSnapshot) => {
+                    let data = childSnapshot.val();
+                    let key = childSnapshot.key;
+                    departments.add(data.department);
+
+                    let row = `<tr>
+                        <td>${data.pin}</td>
+                        <td>${data.name}</td>
+                        <td>${data.department}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm edit-btn" 
+                                data-key="${key}" data-name="${data.name}" data-department="${data.department}">
+                                <i class="bi bi-pencil"></i> Редактировать
+                            </button>
+                            
+                        </td>
+                    </tr>`;
+                    managerTableBody.innerHTML += row;
+                });
+
+                departments.forEach(dept => {
+                    let option = document.createElement("option");
+                    option.value = dept;
+                    option.textContent = dept;
+                    orderDepartment.appendChild(option);
+                });
+
+                // ✅ Назначаем обработчики для кнопок "Редактировать"
+                document.querySelectorAll(".edit-btn").forEach(button => {
+                    button.addEventListener("click", function () {
+                        let key = this.getAttribute("data-key");
+                        let name = this.getAttribute("data-name");
+                        let department = this.getAttribute("data-department");
+
+                        document.getElementById("editManagerId").value = key;
+                        document.getElementById("editManagerName").value = name;
+                        document.getElementById("editManagerDepartment").value = department;
+
+                        // ✅ Проверяем, есть ли уже открытая модалка
+                        let editModalEl = document.getElementById("editManagerModal");
+                        let editModal = bootstrap.Modal.getInstance(editModalEl);
+                        if (!editModal) {
+                            editModal = new bootstrap.Modal(editModalEl);
+                        }
+                        editModal.show();
+                    });
+                });
+
+            });
+
+            window.saveManagerChanges = function () {
+                let key = document.getElementById("editManagerId").value;
+                let name = document.getElementById("editManagerName").value.trim();
+                let department = document.getElementById("editManagerDepartment").value.trim();
+
+                if (!key || name === "" || department === "") {
+                    alert("Заполните все поля!");
+                    return;
+                }
+
+                console.log("🔥 Сохранение изменений...", { key, name, department });
+
+                const managerRef = ref(db, `managers/${key}`);
+
+                update(managerRef, { name, department })
+                    .then(() => {
+                        console.log("✅ Успешно обновлено!");
+                        alert("Данные обновлены!");
+
+                        let editModalEl = document.getElementById("editManagerModal");
+                        let editModal = bootstrap.Modal.getInstance(editModalEl) || new bootstrap.Modal(editModalEl);
+                        editModal.hide();
+                    })
+                    .catch(error => {
+                        console.error("❌ Ошибка обновления:", error.code, error.message);
+                    });
+            };
+
+
+
+            // 🗑 **Удаление менеджера**
+            window.deleteManager = function (key) {
+                remove(ref(db, `managers/${key}`))
+                    .then(() => alert("Менеджер удален!"))
+                    .catch(error => console.error("Ошибка удаления:", error));
+            };
+
+            // 🏆 **Фильтр менеджеров по отделу**
+            orderDepartment.addEventListener("change", function () {
+                const selectedDepartment = orderDepartment.value;
+                orderManager.innerHTML = `<option value="">Выберите менеджера</option>`;
+
+                onValue(ref(db, "managers"), (snapshot) => {
+                    snapshot.forEach((childSnapshot) => {
+                        let manager = childSnapshot.val();
+                        if (manager.department === selectedDepartment) {
+                            let option = document.createElement("option");
+                            option.value = manager.name;
+                            option.textContent = manager.name;
+                            orderManager.appendChild(option);
+                        }
+                    });
+                });
+            });
+
+            // ✅ **Добавление заказа**
+            orderForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                let managerName = orderManager.value;
+                let department = orderDepartment.value;
+                let amount = orderAmount.value;
+
+                if (managerName && department && amount) {
+                    push(ref(db, "orders"), { managerName, department, amount })
+                        .then(() => {
+                            alert("Заказ добавлен!");
+                            orderForm.reset();
+                        })
+                        .catch(error => console.error("Ошибка сохранения:", error));
+                }
+            });
+
+            // 📊 **Отображение заказов**
+            onValue(ref(db, "orders"), (snapshot) => {
+            const ordersTableBody = document.getElementById("ordersTableBody");
+            ordersTableBody.innerHTML = "";
+
+            snapshot.forEach((childSnapshot) => {
+                let data = childSnapshot.val();
+                let key = childSnapshot.key;
+
+                let row = `<tr>
+                    <td>${data.managerName}</td>
+                    <td>${data.department}</td>
+                    <td>${data.amount} тг</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm edit-order-btn" 
+                            data-key="${key}" data-manager="${data.managerName}" 
+                            data-department="${data.department}" data-amount="${data.amount}">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </button>
+                        
+                    </td>
+                </tr>`;
+                ordersTableBody.innerHTML += row;
+            });
+
+            // ✅ Добавляем обработчики для кнопок "Редактировать"
+            document.querySelectorAll(".edit-order-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    let key = this.getAttribute("data-key");
+                    let manager = this.getAttribute("data-manager");
+                    let department = this.getAttribute("data-department");
+                    let amount = this.getAttribute("data-amount");
+
+                    document.getElementById("editOrderId").value = key;
+                    document.getElementById("editOrderManager").value = manager;
+                    document.getElementById("editOrderDepartment").value = department;
+                    document.getElementById("editOrderAmount").value = amount;
+
+                    let editOrderModalEl = document.getElementById("editOrderModal");
+                    let editOrderModal = bootstrap.Modal.getInstance(editOrderModalEl) || new bootstrap.Modal(editOrderModalEl);
+                    editOrderModal.show();
+                });
+            });
+        });
+        window.saveOrderChanges = function () {
+            let key = document.getElementById("editOrderId").value;
+            let manager = document.getElementById("editOrderManager").value.trim();
+            let department = document.getElementById("editOrderDepartment").value.trim();
+            let amount = document.getElementById("editOrderAmount").value.trim();
+
+            if (!key || manager === "" || department === "" || amount === "") {
+                alert("Заполните все поля!");
+                return;
+            }
+
+            console.log("🔥 Сохранение изменений заказа...", { key, manager, department, amount });
+
+            const orderRef = ref(db, `orders/${key}`);
+
+            update(orderRef, { managerName: manager, department, amount })
+                .then(() => {
+                    console.log("✅ Заказ успешно обновлён!");
+                    alert("Данные заказа обновлены!");
+
+                    let editOrderModalEl = document.getElementById("editOrderModal");
+                    let editOrderModal = bootstrap.Modal.getInstance(editOrderModalEl) || new bootstrap.Modal(editOrderModalEl);
+                    editOrderModal.hide();
+                })
+                .catch(error => {
+                    console.error("❌ Ошибка обновления заказа:", error.code, error.message);
+                });
+        };
+        window.deleteOrder = function (key) {
+            remove(ref(db, `orders/${key}`))
+                .then(() => alert("Заказ удалён!"))
+                .catch(error => console.error("Ошибка удаления заказа:", error));
+        };
+            // 🏆 **Добавление топ-менеджера**
+            topManagerForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                const managerData = {
+                    fullName: document.getElementById("topManagerName").value,
+                    department: document.getElementById("topManagerDepartment").value
+                };
+
+                push(ref(db, "top_managers"), managerData)
+                    .then(() => {
+                        alert("Топ-менеджер добавлен!");
+                        topManagerForm.reset();
+                    })
+                    .catch(error => console.error("Ошибка сохранения:", error));
+            });
+
+            // 📊 **Отображение топ-менеджеров**
+            onValue(ref(db, "top_managers"), (snapshot) => {
+                let managers = [];
+                snapshot.forEach(childSnapshot => {
+                    let data = childSnapshot.val();
+                    data.key = childSnapshot.key;
+                    managers.push(data);
+                });
+
+                updateTopManagers(managers);
+            });
+
+            // 🗑 **Удаление топ-менеджера**
+            window.deleteTopManager = function (key) {
+                remove(ref(db, `top_managers/${key}`))
+                    .then(() => alert("Топ-менеджер удален!"))
+                    .catch(error => console.error("Ошибка удаления:", error));
+            };
+
+            // 🔥 **Функция обновления блока "Лидеры"**
+            function updateTopManagers(data) {
+                topManagerTable.innerHTML = "";
+                data.forEach(manager => {
+                    let row = `<tr>
+                        <td>${manager.fullName}</td>
+                        <td>${manager.department}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTopManager('${manager.key}')"><i class="bi bi-bucket"></i> Удалить</button>
+                        </td>
+                    </tr>`;
+                    topManagerTable.innerHTML += row;
+                });
+
+                showLiders.style.display = data.length > 0 ? "block" : "none";
+            }
+        });
+            
+
+            // ✅ Привязываем кнопку к функции
+            document.getElementById("deleteAllOrders").addEventListener("click", deleteAllOrders);
+            import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+
+            // ✅ Инициализация Firebase Auth
+            const auth = getAuth();
+
+            // ✅ Функция выхода из системы
+            function logoutUser() {
+                signOut(auth)
+                    .then(() => {
+                        window.location.href = "index.html"; // Перенаправление на страницу входа (измените при необходимости)
+                    })
+                    .catch((error) => {
+                        console.error("❌ Ошибка при выходе:", error);
+                    });
+            }
+
+            // ✅ Назначаем обработчик клика на кнопку "Выйти"
+            document.getElementById("logoutButton").addEventListener("click", logoutUser);
+
+    </script>
+
+    <script>
+        function showMangers(){
+            document.getElementById("showMangers").style.display = "block";
+            document.getElementById("showOrders").style.display = "none";
+            document.getElementById("showLiders").style.display = "none";
+            document.getElementById("showWeeklyLiders").style.display = "none";
+
+        }
+        function showOrders(){
+            document.getElementById("showMangers").style.display = "none";
+            document.getElementById("showOrders").style.display = "block";
+            document.getElementById("showLiders").style.display = "none";
+            document.getElementById("showWeeklyLiders").style.display = "none";
+
+        }     
+        
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let today = new Date();
+            let formattedDate = today.toLocaleDateString("ru-RU", { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById("currentDate").textContent = formattedDate;
+        });
+        
+
+
+        function saveManagerChanges() {
+                let key = document.getElementById("editManagerId").value;
+                let name = document.getElementById("editManagerName").value.trim();
+                let department = document.getElementById("editManagerDepartment").value.trim();
+
+                if (!key || name === "" || department === "") {
+                    alert("Заполните все поля!");
+                    return;
+                }
+
+                console.log("🔥 Сохранение изменений...", { key, name, department });
+
+                const managerRef = ref(db, `managers/${key}`);
+
+                update(managerRef, { name, department })
+                    .then(() => {
+                        console.log("✅ Успешно обновлено!");
+                        alert("Данные обновлены!");
+
+                        // ✅ Закрываем модальное окно
+                        let editModalEl = document.getElementById("editManagerModal");
+                        let editModal = bootstrap.Modal.getInstance(editModalEl);
+                        if (editModal) {
+                            editModal.hide();
+                        } else {
+                            new bootstrap.Modal(editModalEl).hide();
+                        }
+                    })
+                    .catch(error => {
+                        console.error("❌ Ошибка обновления:", error.code, error.message);
+                    });
+            }
+
+    </script>
+</head>
+<body>
+    <main>
+        <div class="main-grid">
+            <div class="btns mt-5">
+                <h3 style="margin-bottom: 50px;"><span style="color: rgb(231, 181, 72);">BALALIFE</span> &nbsp;| <span style="color: steelblue;">OTAN HOLDING</span></h3>
+                <button onclick="showMangers()" class="btns-onclick"><i class="bi bi-person"></i> Управление менеджерами</button>
+                <button onclick="showOrders()" class="btns-onclick"><i class="bi bi-cart"></i> Управление заказами</button>
+                <!-- <button onclick="showLidersSection()" class="btns-onclick" id="showLidersBtn"><i class="bi bi-fire"></i> ТОП сотрудники</button>
+                <button onclick="showWeeklyLiders()" class="btns-onclick"><i class="bi bi-star"></i> ТОП сотрудник недели</button> -->
+                <button id="logoutButton" class="btn-danger"><i class="bi bi-box-arrow-right"></i> Выйти</button>
+            </div>
+            <div></div>
+            <div class="containers">
+                <div class="container mt-5" id="showMangers">
+                    <h2>Добавить менеджера</h2>
+                    <form id="managerForm">
+                        <input type="text" class="form-control mb-2" id="pin" placeholder="PIN номер" required>
+                        <input type="text" class="form-control mb-2" id="name" placeholder="ФИО" required>
+                        <select class="form-control mb-2" id="department" required>
+                            <option value="">Выберите отдел</option>
+                            <option value="Первичка А">Первичка А</option>
+                            <option value="Первичка Б">Первичка Б</option>
+                            <option value="Первичка С">Первичка С</option>
+                            <option value="База">База</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Добавить менеджера</button>
+                    </form>
+                    <h2 class="mt-5">Список менеджеров</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>PIN</th>
+                                <th>ФИО</th>
+                                <th>Отдел</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="managerTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="container mt-5" id="showOrders">
+                    <h2>Заказы - <span id="currentDate"></span></h2>
+                
+                    <form id="orderForm">
+                        <select class="form-control mb-2" id="orderDepartment" required>
+                            <option value="">Выберите отдел</option>
+                            <option value="Первичка А">Первичка А</option>
+                            <option value="Первичка Б">Первичка Б</option>
+                            <option value="Первичка С">Первичка С</option>
+                            <option value="База">База</option>
+                        </select>
+                        
+                        <select class="form-control mb-2" id="orderManager" required>
+                            <option value="">Выберите менеджера</option>
+                        </select>
+                
+                        <input type="number" class="form-control mb-2" id="orderAmount" placeholder="Сумма заказа" required>
+                
+                        <button type="submit" class="btn btn-success">Добавить заказ</button>
+                    </form>
+                    <!-- Таблица заказов -->
+                    <h3 class="mt-5">Список заказов</h3>
+                    <button id="deleteAllOrders" class="btn btn-danger mt-3">
+                        <i class="bi bi-eraser"></i> Очистить вчерашние заказы
+                    </button>
+                    
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Менеджер</th>
+                                <th>Отдел</th>
+                                <th>Сумма заказа</th>
+                                <th>Действия</th>
+
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody"></tbody>
+                    </table>
+                </div>
+                <!-- <div class="container mt-5" id="showLiders">
+                    <h2>Добавить топ-менеджера месяца</h2>
+                    <form id="topManagerForm">
+                        <div class="mb-3">
+                            <label class="form-label">ФИО менеджера</label>
+                            <input type="text" id="topManagerName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Отдел</label>
+                            <input type="text" id="topManagerDepartment" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </form>
+                    <br><br>
+                    <h2>Лидеры</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ФИО</th>
+                                <th>Отдел</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topManagerTable"></tbody>
+                    </table>
+                </div>
+                <div class="container mt-5" id="showWeeklyLiders">
+                    <h2>Добавить топ-сотрудника недели</h2>
+                    <form id="weeklyTopManagerForm">
+                        <div class="mb-3">
+                            <label class="form-label">ФИО сотрудника</label>
+                            <input type="text" id="weeklyTopManagerName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Отдел</label>
+                            <input type="text" id="weeklyTopManagerDepartment" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </form>
+                    <br><br>
+                    <h2>Топ-сотрудники недели</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ФИО</th>
+                                <th>Отдел</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weeklyTopManagerTable"></tbody>
+                    </table>
+                </div> -->
+                
+                <!-- 📝 Модальное окно редактирования заказа -->
+                <div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Редактировать заказ</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="editOrderId">
+                                <div class="mb-3">
+                                    <label class="form-label">Менеджер</label>
+                                    <input type="text" class="form-control" id="editOrderManager">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Отдел</label>
+                                    <input type="text" class="form-control" id="editOrderDepartment">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Сумма заказа</label>
+                                    <input type="number" class="form-control" id="editOrderAmount">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                <button type="button" class="btn btn-success" onclick="saveOrderChanges()">Сохранить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    
+    <!-- 📝 Модальное окно редактирования -->
+    <!-- Модальное окно редактирования менеджера -->
+    <div class="modal fade" id="editManagerModal" tabindex="-1" aria-labelledby="editManagerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактировать менеджера</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editManagerId">
+                    <div class="mb-3">
+                        <label class="form-label">Имя</label>
+                        <input type="text" class="form-control" id="editManagerName">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Отдел</label>
+                        <select class="form-control mb-2" id="editManagerDepartment" required>
+                            <option value="">Выберите отдел</option>
+                            <option value="Первичка А">Первичка А</option>
+                            <option value="Первичка Б">Первичка Б</option>
+                            <option value="Первичка С">Первичка С</option>
+                            <option value="База">База</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-success" onclick="saveManagerChanges()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Успешное добавление заказа -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="successModalLabel">Успех!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Заказ успешно добавлен!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">ОК</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

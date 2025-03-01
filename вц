@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список заказов</title>
+    <link rel="icon" type="png" href="logo.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        #congratsMessage {
+            position: fixed;
+            top: 0%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff4081;
+            text-shadow: 2px 2px 10px rgba(255, 64, 129, 0.8);
+            opacity: 0;
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+            z-index: 5000;
+        }
+        #topManager {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        #topManager h3 {
+            margin-bottom: 10px;
+            color: #28a745;
+        }
+        #topManager p {
+            font-size: 1.2rem;
+        }
+        #topEmployeeWeek {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        #topEmployeeWeek h3 {
+            margin-bottom: 10px;
+            color: #28a745;
+        }
+        #topEmployeeWeek p {
+            font-size: 1.2rem;
+        }
+        main{
+            display: grid;
+            width: 90%;
+            gap: 1em;
+            margin: 50px auto;
+            grid-template-columns: 20% 60% 20%;
+        }
+        header{
+            display: grid;
+            width: 90%;
+            gap: 1em;
+            margin: 50px auto;
+            grid-template-columns: 20% 60% 20%;
+
+        }
+        main h2{
+            margin-top: 0px;
+        }
+        header h3 span{
+            font-weight: bold;
+        }
+        header h3{
+            position: absolute;
+        }
+        .top-manager_img{
+            width: 150px;
+
+        }
+        .top-manager_img-2{
+            width: 150px;
+            height: 130px;
+        }
+        header h2{
+            text-align: center;
+        }
+        .top-liders_today {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .top-lider {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 200px;
+            margin-bottom: -70px;
+            z-index: 1000;
+        }
+        .department-card {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            font-weight: bold;
+            position: relative;
+        }
+        .department-card h3{
+            display: grid;
+            grid-template-columns: 20% 90%;
+        }
+        .department-card p{
+            margin-left: 20%;
+            
+        }
+        .top-liders_today-img{
+            width: 80%;
+            margin-left: 10%;
+            position: relative;
+            margin-bottom: -100px;
+            z-index: -100;
+        }
+
+        
+
+        .top-lider {
+            margin-top: 50px;
+        }
+
+        .first-place {
+           position: absolute;
+        }
+
+        .second-place {
+            transform: translateY(20px);
+            height: 200px;
+            align-content: center;
+            position: relative;
+        }
+
+        .top-lider img{
+            width: 200px;
+        }
+        .top-lider h3{
+            margin-top: -120px;
+            text-align: center;
+            font-weight: bold;
+            width: 80%;
+            min-height: 80px;
+            margin-left: 10%;
+            color: rgb(114, 68, 68);
+            text-shadow: 0px 0px 5px rgb(255, 255, 255);
+        }
+        .top-lider p{
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: rgb(124, 46, 41);
+            text-shadow: 0px 0px 3px darkslategrey;
+        }
+        .third-place {
+            position: relative;
+            top: 50px;
+            height: 200px;
+            left: 30px;
+            align-content: center;
+        }
+        table{
+            z-index: 50000;
+            font-size: 20px;
+            width: 80%;
+            margin: auto;
+            margin-top: 100px;
+        }
+        
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let today = new Date();
+            let formattedDate = today.toLocaleDateString("ru-RU", { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById("currentDate").textContent = formattedDate;
+        });
+    </script>
+</head>
+<body>
+    <div id="congratsMessage"></div>
+
+
+    <main>
+            <div>
+                <h3 style="font-size: 23px;"><span style="color: rgb(231, 181, 72);">BALALIFE</span> &nbsp;| <span style="color: steelblue;">OTAN HOLDING</span></h3>
+                <div id="topManager">
+                    <img src="https://spb.rpa-mu.ru/Media/spb/Docs/Sergeeva/новости/racing-trophy-clipart-15.png" class="top-manager_img">
+                    <h3>Топ-менеджер месяца</h3>
+                    <h4 id="topManagerName">Загрузка...</h4>
+                    <p id="topManagerDepartment"></p>
+                </div>
+                <div id="topEmployeeWeek">
+                    <img src="https://lastfm.freetls.fastly.net/i/u/ar0/364f6c3d3ca20323f86fc2722fbf47ae.png" class="top-manager_img-2">
+                    <h3>Топ-сотрудник недели</h3>
+                    <h4 id="topEmployeeName">Загрузка...</h4>
+                    <p id="topEmployeeDepartment"></p>
+                </div>
+                
+            </div>
+            
+            <div class="container">
+                <h2 style="text-align: center;">Заказы - <span id="currentDate"></span></h2>
+                <div class="top-liders_today">
+                </div>
+                <img class="top-liders_today-img" src="Дизайн без названия (2) (1).png">
+                <table class="table" style="width: 80%; margin-top: 0px;">
+                    <thead>
+                        <tr>
+                            <th>Ранг</th>
+                            <th>Менеджер</th>
+                            <th>Отдел</th>
+                            <th style="text-align: center;">Общая сумма заказов</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody" style="color: darkslategray;"></tbody>
+                </table>
+                
+            </div>
+
+            <div id="ordersByDepartment" class="container">
+                <h4>Общий объём заказов по отделам:</h4>
+                <div id="departmentsContainer" class="d-flex flex-wrap justify-content-center gap-3"></div>
+            </div>
+    </main>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+        import { getDatabase, ref, onChildAdded, onValue } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAe60jFUBBzI_3FpBihL-Vf45cQG14s6x8",
+            authDomain: "balalife-crm-application.firebaseapp.com",
+            databaseURL: "https://balalife-crm-application-default-rtdb.firebaseio.com",
+            projectId: "balalife-crm-application",
+            storageBucket: "balalife-crm-application.firebasestorage.app",
+            messagingSenderId: "630645094153",
+            appId: "1:630645094153:web:99bf08136f6a10a2b2c5d8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const ordersTableBody = document.getElementById("ordersTableBody");
+        const congratsMessage = document.getElementById("congratsMessage");
+        const topManagerName = document.getElementById("topManagerName");
+        const topManagerDepartment = document.getElementById("topManagerDepartment");
+
+        let ordersData = {};
+
+        function updateTable() {
+            ordersTableBody.innerHTML = "";
+            let topLidersContainer = document.querySelector(".top-liders_today");
+            topLidersContainer.innerHTML = ""; // Очищаем перед обновлением
+
+            let sortedManagers = Object.entries(ordersData)
+                .sort((a, b) => b[1].totalAmount - a[1].totalAmount);
+
+            // ✅ Проверяем, есть ли хотя бы 3 менеджера
+            if (sortedManagers.length >= 3) {
+                let firstPlace = sortedManagers[0]; // 🥇 1-е место
+                let secondPlace = sortedManagers[1]; // 🥈 2-е место
+                let thirdPlace = sortedManagers[2]; // 🥉 3-е место
+
+                topLidersContainer.innerHTML = `
+                    <div class="top-lider second-place">
+                        <img src="bgplaces.png">
+                        <h3>${secondPlace[0]}</h3>
+                        <p>${secondPlace[1].totalAmount.toLocaleString()} тг</p>
+                    </div>
+                    <div class="top-lider first-place">
+                        <img src="bgplaces.png">
+                        <h3>${firstPlace[0]}</h3>
+                        <p>${firstPlace[1].totalAmount.toLocaleString()} тг</p>
+                    </div>
+                    <div class="top-lider third-place">
+                        <img src="bgplaces.png">
+                        <h3>${thirdPlace[0]}</h3>
+                        <p>${thirdPlace[1].totalAmount.toLocaleString()} тг</p>
+                    </div>
+                `;
+            } else {
+                // Если менеджеров меньше 3, просто добавляем их как есть
+                sortedManagers.forEach(([manager, data], index) => {
+                    let topLiderHtml = `
+
+                        <div class="top-lider">
+                            <img src="bgplaces.png">
+                            <h3>${manager}</h3>
+                            <p>${data.totalAmount.toLocaleString()} тг</p>
+                        </div>`;
+                        
+                    topLidersContainer.innerHTML += topLiderHtml;
+                });
+            }
+        
+
+
+            // Остальные сотрудники отображаются в таблице, начиная с 4-го места
+            sortedManagers.slice(3).forEach(([manager, data], index) => {
+                const row = `<tr>
+                    <td>${index + 4}</td>  <!-- Ранг начиная с 4 -->
+                    <td>${manager}</td>
+                    <td>${data.department}</td>
+                    <td style="text-align: center;">${data.totalAmount.toLocaleString()} тг</td>
+                </tr>`;
+                ordersTableBody.innerHTML += row;
+            });
+        }
+
+
+        function launchConfetti() {
+        const positions = [
+            { x: 0.1, y: 0.5, angle: 45 },
+            { x: 0.5, y: 0.7, angle: 90 },
+            { x: 0.9, y: 0.5, angle: 135 }
+        ];
+
+        const canvas = document.createElement("canvas");
+        canvas.id = "confettiCanvas"; // Даем ID
+        canvas.style.position = "fixed";
+        canvas.style.top = "0";
+        canvas.style.left = "0";
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.zIndex = "10001"; // Поднимаем выше всего
+        canvas.style.pointerEvents = "none";
+
+        document.body.appendChild(canvas); // Добавляем в body
+
+        const myConfetti = confetti.create(canvas, { resize: true });
+
+        positions.forEach((pos, index) => {
+            setTimeout(() => {
+                myConfetti({
+                    particleCount: 100,
+                    spread: 150,
+                    angle: pos.angle,
+                    startVelocity: 45,
+                    scalar: 1.2,
+                    origin: { x: pos.x, y: pos.y },
+                    ticks: 200,
+                });
+            }, index * 600);
+        });
+
+        setTimeout(() => {
+            document.body.removeChild(canvas); // Удаляем после анимации
+        }, 5000);
+    }
+
+
+        function showCongratsMessage(managerName) {
+            const messages = [
+                `Ты настоящий лидер, ${managerName}! 🎉`,
+                `Великолепный результат, ${managerName}! 🔥`,
+                `Ты сделал(а) это! Гордимся тобой, ${managerName}! 🚀`,
+                `Твой успех – это только начало, ${managerName}! 💪`,
+                `Ты вдохновляешь команду, ${managerName}! 🔥`,
+                `Отличная работа, ${managerName}! Ты на высоте! 🌟`
+            ];
+
+            // Выбираем случайное сообщение
+            let randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+            congratsMessage.textContent = randomMessage;
+            congratsMessage.style.opacity = "1";
+            congratsMessage.style.fontSize = "70px";
+            congratsMessage.style.textAlign = "center";
+            congratsMessage.style.height = "100%";
+            congratsMessage.style.width = "100%";
+            congratsMessage.style.backgroundColor = "rgb(255, 255, 255, 0.5)";
+
+            congratsMessage.style.alignContent = "center";
+            congratsMessage.style.color = "darkslategray"; // Небесно-голубой цвет
+            congratsMessage.style.textShadow = "0px 0px 5px white"; // Голубое + белое свечение
+            congratsMessage.style.transition = "opacity 0.5s ease-in-out, transform 0.5s ease-in-out"; // Плавность
+            congratsMessage.style.transform = "translate(-50%, 0%)";
+
+            setTimeout(() => {
+                congratsMessage.style.opacity = "0";
+                congratsMessage.style.transform = "translate(-50%, -50%)";
+            }, 5000);
+        }
+
+        // 🛠 Обновление заказов
+        onChildAdded(ref(db, "orders"), (snapshot) => {
+            const data = snapshot.val();
+            if (ordersData[data.managerName]) {
+                ordersData[data.managerName].totalAmount += parseFloat(data.amount);
+            } else {
+                ordersData[data.managerName] = {
+                    department: data.department,
+                    totalAmount: parseFloat(data.amount)
+                };
+            }
+            updateTable();
+            launchConfetti();
+            showCongratsMessage(data.managerName);
+        });
+
+        // 🏆 Получение топ-менеджера месяца
+        function loadTopManager() {
+            onValue(ref(db, "top_managers"), (snapshot) => {
+                let managers = [];
+                snapshot.forEach(childSnapshot => {
+                    managers.push(childSnapshot.val());
+                });
+
+                if (managers.length > 0) {
+                    let topManager = managers[managers.length - 1]; // Берем последнего добавленного
+                    topManagerName.textContent = `${topManager.fullName}`;
+                    topManagerDepartment.textContent = `Отдел: ${topManager.department}`;
+                } else {
+                    topManagerName.textContent = "Нет данных";
+                    topManagerDepartment.textContent = "";
+                }
+            });
+        }
+
+        // 🔄 Загружаем топ-менеджера
+        loadTopManager();
+
+        function loadTopEmployeeOfTheWeek() {
+        onValue(ref(db, "weekly_top_managers"), (snapshot) => {
+            let employees = [];
+            snapshot.forEach(childSnapshot => {
+                employees.push(childSnapshot.val());
+            });
+
+            if (employees.length > 0) {
+                let topEmployee = employees[employees.length - 1]; // Берем последнего добавленного
+                document.getElementById("topEmployeeName").textContent = `${topEmployee.fullName}`;
+                document.getElementById("topEmployeeDepartment").textContent = `Отдел: ${topEmployee.department}`;
+            } else {
+                document.getElementById("topEmployeeName").textContent = "Нет данных";
+                document.getElementById("topEmployeeDepartment").textContent = "";
+            }
+        });
+    }
+    const departmentsContainer = document.getElementById("departmentsContainer");
+    let departmentOrders = {};
+
+    // ✅ Обновление блока с отделами
+    function updateDepartmentsView() {
+        departmentsContainer.innerHTML = "";
+
+        let sortedDepartments = Object.entries(departmentOrders)
+            .sort((a, b) => b[1] - a[1]); // Сортировка по убыванию
+
+        sortedDepartments.forEach(([department, totalAmount], index) => {
+            let backgroundImage;
+            
+            switch (index) {
+                case 0:
+                    backgroundImage = "url('bg1.png')";
+                    break;
+                case 1:
+                    backgroundImage = "url('bg2.png')";
+                    break;
+                case 2:
+                    backgroundImage = "url('bg3.png')";
+                    break;
+                default:
+                    backgroundImage = "url('default.png')"; // Стандартный фон
+            }
+
+            let departmentCard = `
+                <div class="department-card" style="
+                    background-image: ${backgroundImage};
+                    background-size: cover;
+                    background-position: center;
+                    padding: 15px;
+                    border-radius: 10px;
+                    text-align: left;
+                    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                    width: 90%;
+                    color: white;
+                    font-weight: bold;">
+                    <h3><span>${index + 1}</span> ${department}</h3>
+                    <p style="text-shadow: 0px 0px 3px solid; font-size:"20px"> <strong>${totalAmount.toLocaleString()} тг</strong></p>
+                </div>
+            `;
+            departmentsContainer.innerHTML += departmentCard;
+        });
+    }
+
+
+    // ✅ Получение данных из Firebase
+    onValue(ref(db, "orders"), (snapshot) => {
+        departmentOrders = {}; // Очистка перед обновлением
+
+        snapshot.forEach((childSnapshot) => {
+            let order = childSnapshot.val();
+            let department = order.department;
+            let amount = parseFloat(order.amount);
+
+            if (departmentOrders[department]) {
+                departmentOrders[department] += amount;
+            } else {
+                departmentOrders[department] = amount;
+            }
+        });
+
+        updateDepartmentsView(); // Обновляем отображение
+    });
+
+    loadTopEmployeeOfTheWeek();
+    </script>
+    <script>
+        const salesMemes = [
+            "https://risovach.ru/upload/2015/08/mem/moe-lico-kogda_89430726_orig_.png",
+            "https://sun9-69.userapi.com/impg/b20oNGpk6idykwDz7j5hhbg4ZMz9YpYezw3EAA/TywJxt9E9W0.jpg?size=500x366&quality=96&sign=67e1bd1d16d11b9f8ef5966d1a1f55ff&type=album",
+            "https://cs10.pikabu.ru/post_img/2019/02/06/1/1549406246148112416.jpg",
+            "https://habrastorage.org/getpro/habr/upload_files/3fe/9c4/0a9/3fe9c40a9dce8959dc30337cf9842b51.jpeg",
+            "https://avatars.dzeninfra.ru/get-zen_doc/9686459/pub_647c2290fbbc155f7935b66d_647c245d398ee614dc6ac1a4/scale_1200",
+            "https://cdn1.tenchat.ru/static/vbc-gostinder/2022-07-14/78bc718b-9b6e-495a-82f3-05c9cc45c42d.jpeg",
+            "https://cs12.pikabu.ru/post_img/2022/11/09/0/1667944349135975689.webp",
+            "https://avatars.mds.yandex.net/i?id=ca51196d3a61c39d5a14c87bd21538f3_l-5298642-images-thumbs&n=13",
+            "https://risovach.ru/upload/2017/11/mem/r_161251265_orig_.jpg",
+            "https://sun9-73.userapi.com/impg/euW84gnPPJq_oXBoATbuZR7Lf97D3ijK3Ge2kQ/Pwz5RhbpwK0.jpg?size=590x575&quality=95&sign=d9ae5a6dd6005479350bd00227aa6807&c_uniq_tag=wR5KbZ8hr5ueXfUBzJ19IdGH1K7aJ74zfcxr78DCzYc&type=album",
+            "https://avatars.mds.yandex.net/i?id=9cb0d101cb317795af8ab09230625cee_l-4238543-images-thumbs&n=13"
+        ];
+        let memeIndex = 0; // Счётчик для показа мемов по очереди
+
+        // Функция для показа мемного изображения
+        function showSalesMeme() {
+            // Получаем следующий мем по индексу
+            const currentMeme = salesMemes[memeIndex];
+
+            let memeDiv = document.createElement("div");
+            let memeImg = document.createElement("img");
+
+            memeDiv.style.position = "fixed";
+            memeDiv.style.top = "50%";
+            memeDiv.style.left = "50%";
+            memeDiv.style.transform = "translate(-50%, -50%)";
+            memeDiv.style.width = "100%"; // Размер окна с мемом
+            memeDiv.style.height = "100%"; // Размер окна с мемом
+            memeDiv.style.alignContent = "center"; // Размер окна с мемом
+
+            memeDiv.style.padding = "20px";
+            memeDiv.style.background = "rgba(0, 0, 0, 0.9)";
+            memeDiv.style.borderRadius = "10px";
+            memeDiv.style.boxShadow = "0px 0px 15px rgba(255, 255, 255, 0.5)";
+            memeDiv.style.zIndex = "99999";
+            memeDiv.style.textAlign = "center";
+            memeDiv.style.transition = "opacity 1s ease-in-out";
+
+            memeImg.src = currentMeme;
+            memeImg.style.width = "60%"; 
+            memeImg.style.borderRadius = "10px";
+
+            memeDiv.appendChild(memeImg);
+            document.body.appendChild(memeDiv);
+
+            // Убираем мем через 5 секунд
+            setTimeout(() => {
+                memeDiv.style.opacity = "0";
+                setTimeout(() => memeDiv.remove(), 1000);
+            }, 5000);
+
+            // Увеличиваем индекс, если достигли конца — начинаем с 0
+            memeIndex = (memeIndex + 1) % salesMemes.length;
+        }
+
+        // Запускаем мем каждые 30 минут
+        setInterval(showSalesMeme, 30 * 60 * 1000);
+
+        // Создаём кнопку для ручного вызова мема
+        const testButton = document.createElement("button");
+        testButton.textContent = "Показать мем";
+        testButton.style.position = "fixed";
+        testButton.style.bottom = "20px";
+        testButton.style.right = "20px";
+        testButton.style.padding = "10px 20px";
+        testButton.style.fontSize = "18px";
+        testButton.style.background = "#28a745";
+        testButton.style.color = "#fff";
+        testButton.style.border = "none";
+        testButton.style.borderRadius = "5px";
+        testButton.style.cursor = "pointer";
+        testButton.style.zIndex = "100000";
+        testButton.onclick = showSalesMeme;
+
+        document.body.appendChild(testButton);
+    </script>
+</body>
+</html>
