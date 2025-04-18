@@ -11,9 +11,18 @@
     <link rel="icon" type="png" href="logo.png">
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getDatabase, ref, push, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
-
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
+        import { getDatabase, ref, push, set, remove, update, onValue } from from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
+          
+          const firebaseConfig = {
+            apiKey: "AIzaSyDCHaYqsaMX2TqmIRXZeZ6RChPut1fhGT8",
+            authDomain: "adwadaw-36ee0.firebaseapp.com",
+            projectId: "adwadaw-36ee0",
+            storageBucket: "adwadaw-36ee0.firebasestorage.app",
+            messagingSenderId: "794472235136",
+            appId: "1:794472235136:web:28f4cb173670dee611a665",
+            measurementId: "G-NCC61E7EZZ"
+          };
 
         // 🛠 **Инициализация Firebase**
         const app = initializeApp(firebaseConfig);
